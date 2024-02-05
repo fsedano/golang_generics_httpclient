@@ -120,6 +120,30 @@ func fetchWorker[T API](id int, jobs <-chan T, results chan<- string) {
 
 }
 
+func prepareSubmit[T API](parm []T) {
+
+	numJ := len(parm)
+	jobs := make(chan T, numJ)
+	res := make(chan string, numJ)
+
+	log.Printf("Spawn workers...")
+	for w := 1; w <= 3; w++ {
+		go fetchWorkerT(w, jobs, res)
+	}
+
+	// Send jobs
+	for j := 0; j < numJ; j++ {
+		jobs <- T[j]
+	}
+	close(jobs)
+	// Wait results
+	log.Printf("Wait results")
+	for a := 1; a <= numJ; a++ {
+		log.Printf("Res: %s", <-res)
+	}
+
+}
+
 func main() {
 	const numJ = 5
 	jobs := make(chan Device, numJ)
